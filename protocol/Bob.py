@@ -21,8 +21,8 @@ class Bob:
         qc_bob = self.get_qc(qc, i, ctx)
 
         noise_model = ctx.get("noise_model", None)
-        self.backend = AerSimulator(method="density_matrix", noise_model=ctx['noise_model'])
+        self.backend = AerSimulator(method="density_matrix", noise_model=noise_model)
         compiled = transpile(qc_bob, self.backend, optimization_level=0)
 
-        job = self.backend.run(compiled, shots=1, memory=True, noise_model=noise_model)
+        job = self.backend.run(compiled, shots=1, memory=True)
         return int(job.result().get_memory()[0])

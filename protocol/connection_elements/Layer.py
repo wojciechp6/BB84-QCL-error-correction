@@ -1,12 +1,15 @@
+from typing import List
+
 import torch
 import torch.nn as nn
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
 
 from protocol.connection_elements.ConnectionElement import ConnectionElement
+from protocol.connection_elements.TrainableConnectionElement import TrainableConnectionElement
 
 
-class Layer(nn.Module, ConnectionElement):
+class Layer(TrainableConnectionElement):
     _index = 0
     def __init__(self):
         super().__init__()
@@ -23,3 +26,5 @@ class Layer(nn.Module, ConnectionElement):
         qc.rz(self.params[2], qubit=0)
         return qc
 
+    def trainable_parameters(self) -> List[Parameter]:
+        return self.params
