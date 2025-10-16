@@ -46,14 +46,15 @@ class BB84TrainableProtocol(BB84Protocol):
 
         self.optimizer.zero_grad()
         outputs = self.model(inputs)
-        outputs = outputs[:, 0].unsqueeze(-1)
-        loss = ((outputs - target).pow(2))[mask].mean()
+        outputs = outputs[:, 1].unsqueeze(-1)
+        loss = ((outputs - target).abs())[mask].mean()
         loss.backward()
         self.optimizer.step()
         return loss.item()
 
     def run(self):
         ctx = self._setup()
+        bob_results = []
 
         for i in range(self.n_bits):
             qc = self.alice.prepare(i)
@@ -63,10 +64,10 @@ class BB84TrainableProtocol(BB84Protocol):
 
             qc.assign_parameters(self.get_params(), inplace=True)
             result = self.bob.measure(qc, i, ctx)
-            self.bob_results.append(result)
+            bob_results.append(result)
 
-        self._sift()
-        return self._metrics()
+        sifted = self._sift(bob_results)
+        return self._metrics(*sifted)
 
     def save(self, path: str):
         torch.save(self.model.state_dict(), path)

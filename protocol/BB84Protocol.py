@@ -16,16 +16,13 @@ class BB84Protocol:
         self.bob = Bob(n_bits)
         self.elements = elements if elements is not None else []
 
-        self.bob_results = []
-        self.sifted_alice = []
-        self.sifted_bob = []
-
         self.backend = AerSimulator()
         self.noise = NoiseModel()
         self.parameters = None
 
     def run(self):
         ctx = self._setup()
+        bob_results = []
 
         for i in range(self.n_bits):
             qc = self.alice.prepare(i)
@@ -34,10 +31,10 @@ class BB84Protocol:
                 qc = elem.process(qc, i, ctx)
 
             result = self.bob.measure(qc, i, ctx)
-            self.bob_results.append(result)
+            bob_results.append(result)
 
-        self._sift()
-        return self._metrics()
+        sifted = self._sift(bob_results)
+        return self._metrics(*sifted)
 
     def _setup(self) -> dict:
         ctx = {'backend': self.backend, 'noise_model': self.noise}
@@ -45,17 +42,19 @@ class BB84Protocol:
             elem.setup(ctx)
         return ctx
 
-    def _sift(self):
+    def _sift(self, bob_results:List[int]):
+        sifted_alice, sifted_bob = [], []
         for i in range(self.n_bits):
             if self.alice.bases[i] == self.bob.bases[i]:
-                self.sifted_alice.append(self.alice.bits[i])
-                self.sifted_bob.append(self.bob_results[i])
+                sifted_alice.append(self.alice.bits[i])
+                sifted_bob.append(bob_results[i])
+        return sifted_alice, sifted_bob
 
-    def _metrics(self):
-        if len(self.sifted_alice) == 0:
+    def _metrics(self, sifted_alice:List[int], sifted_bob:List[int]):
+        if len(sifted_alice) == 0:
             return None, None
-        a = np.array(self.sifted_alice)
-        b = np.array(self.sifted_bob)
+        a = np.array(sifted_alice)
+        b = np.array(sifted_bob)
         acc = np.sum(a == b) / len(a)
         qber = 1 - acc
         return acc, qber

@@ -24,10 +24,5 @@ class Bob:
         self.backend = AerSimulator(method="density_matrix", noise_model=ctx['noise_model'])
         compiled = transpile(qc_bob, self.backend, optimization_level=0)
 
-        if i < 3:
-            print(qc.draw(output='text'))
-        #     print(noise_model)
-        #     print(compiled)
-
         job = self.backend.run(compiled, shots=1, memory=True, noise_model=noise_model)
         return int(job.result().get_memory()[0])
