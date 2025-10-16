@@ -1,3 +1,6 @@
+from typing import OrderedDict
+
+import torch
 import torch.optim as optim
 from qiskit_aer.noise import depolarizing_error, phase_damping_error
 
@@ -8,11 +11,16 @@ from protocol.connection_elements.Noise import Noise
 
 
 if __name__ == "__main__":
-    channel_noise = Noise(phase_damping_error(0.5))
+    channel_noise = Noise(depolarizing_error(0.5, 1))
     encode = Layer()
     decode = Layer()
     elements = []
     pipeline_clean = BB84TrainableProtocol(n_bits=100, elements=[encode, channel_noise, decode])
+    sd = pipeline_clean.model.state_dict()
+    print(sd)
+    sd = OrderedDict({k:torch.zeros_like(v) for k, v in sd.items()})
+    print(sd)
+    pipeline_clean.model.load_state_dict(sd)
 
     acc, qber = pipeline_clean.run()
     print(f"Accuracy: {acc} QBER: {qber}")
