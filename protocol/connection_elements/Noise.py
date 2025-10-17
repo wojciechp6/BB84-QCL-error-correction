@@ -17,7 +17,9 @@ class Noise(ConnectionElement):
     _operation_map = {
         "id": lambda qc: qc.id(0),
     }
-    def __init__(self, quantum_error: QuantumError | List[QuantumError]):
+    def __init__(self, quantum_error: QuantumError | List[QuantumError], is_new_circuit: bool = False):
+        if is_new_circuit:
+            Noise._index = 0
         self.gate = Noise._gates[Noise._index]
         self.error = quantum_error
         if not isinstance(self.error, list):

@@ -1,11 +1,9 @@
 import itertools
-from itertools import islice
 from typing import List
 
 import numpy as np
 import torch
 from qiskit import QuantumCircuit
-from sympy.physics.vector.printing import params
 from torch import nn, optim
 from qiskit_aer.primitives import Estimator, Sampler
 from qiskit_machine_learning.connectors import TorchConnector
