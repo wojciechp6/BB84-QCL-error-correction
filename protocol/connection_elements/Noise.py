@@ -1,7 +1,7 @@
 from typing import List
 
 from qiskit import QuantumCircuit
-from qiskit_aer.noise import QuantumError
+from qiskit_aer.noise import QuantumError, NoiseModel
 
 from protocol.connection_elements.ConnectionElement import ConnectionElement
 
@@ -29,7 +29,7 @@ class Noise(ConnectionElement):
     def setup(self, ctx: dict):
         if self.error is not None:
             for error in self.error:
-                ctx['noise_model'].add_all_qubit_quantum_error(error, [self.gate], warnings=False)
+                ctx['noise_model'].add_all_qubit_quantum_error(error, [self.gate], warnings=True)
 
     def process(self, qc: QuantumCircuit, i: int, ctx: dict) -> QuantumCircuit:
         Noise._operation_map[self.gate](qc)

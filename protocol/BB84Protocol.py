@@ -1,7 +1,6 @@
 from typing import List
 
 import numpy as np
-from qiskit_aer import AerSimulator
 from qiskit_aer.noise import NoiseModel
 
 from protocol.Bob import Bob
@@ -10,15 +9,11 @@ from protocol.connection_elements.ConnectionElement import ConnectionElement
 
 
 class BB84Protocol:
-    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None):
+    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None):
         self.n_bits = n_bits
-        self.alice = Alice(n_bits)
-        self.bob = Bob(n_bits)
         self.elements = elements if elements is not None else []
-
-        self.backend = AerSimulator()
-        self.noise = NoiseModel()
-        self.parameters = None
+        self.alice = Alice(n_bits, seed=seed)
+        self.bob = Bob(n_bits, seed=seed+1)
 
     def run(self):
         ctx = self._setup()
@@ -37,7 +32,7 @@ class BB84Protocol:
         return self._metrics(*sifted)
 
     def _setup(self) -> dict:
-        ctx = {'backend': self.backend, 'noise_model': self.noise}
+        ctx = {'noise_model': NoiseModel()}
         for elem in self.elements:
             elem.setup(ctx)
         return ctx

@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import numpy as np
 from qiskit import QuantumCircuit, transpile
 from qiskit.circuit import Parameter
@@ -5,8 +7,9 @@ from qiskit_aer import AerSimulator
 
 
 class Bob:
-    def __init__(self, n_bits: int):
-        self.bases = np.random.randint(2, size=n_bits)
+    def __init__(self, n_bits: int, seed=None):
+        random = np.random.RandomState(seed)
+        self.bases = random.randint(2, size=n_bits)
         self.base_p = Parameter("bob_base")
         self.backend = None
 

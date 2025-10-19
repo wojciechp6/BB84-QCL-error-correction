@@ -4,9 +4,10 @@ from qiskit.circuit import Parameter
 
 
 class Alice:
-    def __init__(self, n_bits: int):
-        self.bits = np.random.randint(2, size=n_bits)
-        self.bases = np.random.randint(2, size=n_bits)
+    def __init__(self, n_bits: int, seed=None):
+        random = np.random.RandomState(seed)
+        self.bits = random.randint(2, size=n_bits)
+        self.bases = random.randint(2, size=n_bits)
         self.bit_p = Parameter("alice_bit")
         self.base_p = Parameter("alice_base")
 

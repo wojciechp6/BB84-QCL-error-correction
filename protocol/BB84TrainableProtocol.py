@@ -15,8 +15,8 @@ from protocol.connection_elements.TrainableConnectionElement import TrainableCon
 
 
 class BB84TrainableProtocol(BB84Protocol):
-    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None):
-        super().__init__(n_bits, elements)
+    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None):
+        super().__init__(n_bits, elements, seed)
         self.sampler = Sampler()
         trainable_qc = self._prepare_trainable_qc()
         self._trainable_params = [e.trainable_parameters() for e in self.elements if isinstance(e, TrainableConnectionElement)]
