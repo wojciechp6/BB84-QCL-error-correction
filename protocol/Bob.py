@@ -1,9 +1,9 @@
-from pathlib import Path
-
 import numpy as np
-from qiskit import QuantumCircuit, transpile
+from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
-from qiskit_aer import AerSimulator
+from qiskit_aer.primitives import SamplerV2
+
+from utils import most_common_value
 
 
 class Bob:
@@ -13,7 +13,7 @@ class Bob:
         self.base_p = Parameter("bob_base")
         self.backend = None
 
-    def get_qc(self, qc: QuantumCircuit, i, ctx: dict):
+    def get_qc(self, qc: QuantumCircuit, i, ctx: dict) -> QuantumCircuit:
         qc.ry(self.base_p * -3.14/2, 0)
         qc.measure(0, 0)
         if i is not None:
@@ -24,8 +24,7 @@ class Bob:
         qc_bob = self.get_qc(qc, i, ctx)
 
         noise_model = ctx.get("noise_model", None)
-        self.backend = AerSimulator(method="density_matrix", noise_model=noise_model)
-        compiled = transpile(qc_bob, self.backend, optimization_level=0)
+        self.backend = ctx.get("backend", None) or SamplerV2(options={"backend_options": {"noise_model": noise_model}})
 
-        job = self.backend.run(compiled, shots=1, memory=True)
-        return int(job.result().get_memory()[0])
+        result = self.backend.run([qc_bob], shots=1).result()
+        return int(most_common_value(result, 0))

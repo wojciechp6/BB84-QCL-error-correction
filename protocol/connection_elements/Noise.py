@@ -26,11 +26,9 @@ class Noise(ConnectionElement):
             self.error = [self.error]
         Noise._index = Noise._index + 1
 
-    def setup(self, ctx: dict):
+    def process(self, qc: QuantumCircuit, i: int, ctx: dict) -> QuantumCircuit:
         if self.error is not None:
             for error in self.error:
                 ctx['noise_model'].add_all_qubit_quantum_error(error, [self.gate], warnings=True)
-
-    def process(self, qc: QuantumCircuit, i: int, ctx: dict) -> QuantumCircuit:
         Noise._operation_map[self.gate](qc)
         return qc

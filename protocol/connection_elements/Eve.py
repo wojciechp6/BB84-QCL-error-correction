@@ -9,9 +9,6 @@ class Eve(ConnectionElement):
     def __init__(self):
         self.backend = Aer.get_backend("aer_simulator")
 
-    def setup(self, ctx: dict):
-        pass
-
     def process(self, qc: QuantumCircuit, i: int, ctx: dict) -> QuantumCircuit:
         e_basis = np.random.randint(2)
 
