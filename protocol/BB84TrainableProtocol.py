@@ -18,35 +18,18 @@ from utils import most_common_value
 
 class BB84TrainableProtocol(BB84Protocol):
     def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None,
-                 *, batch_size:int=64, learning_rate:float=0.1, ):
+                 *, batch_size:int=64, learning_rate:float=0.1):
         super().__init__(n_bits, elements, seed)
 
-        self.qc, self.ctx = self._get_qc_with_ctx()
-        self.sampler = SamplerV2(default_shots=1, seed=seed, options={"backend_options": {"noise_model": self.ctx.get("noise_model", None)}})
         self._trainable_params = [e.trainable_parameters() for e in self.elements if isinstance(e, TrainableConnectionElement)]
         self._trainable_params = list(itertools.chain.from_iterable(self._trainable_params))
-        self._input_params = [self.alice.bit_p, self.alice.base_p, self.bob.base_p]
-        self._input_values = [self.alice.bits, self.alice.bases, self.bob.bases]
-        qnn = SamplerQNN(circuit=self.qc,
-                         sampler=self.sampler,
+        qnn = SamplerQNN(circuit=self._qc,
+                         sampler=self._sampler,
                          input_params=self._input_params,
                          weight_params=self._trainable_params)
         self.model = TorchConnector(qnn)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.dataloader = self._get_dataloader(batch_size)
-
-    def _get_ctx(self) -> dict:
-        ctx = super()._get_ctx()
-        ctx['backend'] = SamplerV2(options={"backend_options": {"noise_model": ctx.get("noise_model", None)}})
-        return ctx
-
-    def _get_qc_with_ctx(self) -> Tuple[QuantumCircuit, dict]:
-        ctx = self._get_ctx()
-        trainable_qc = self.alice.prepare()
-        for e in self.elements:
-            trainable_qc = e.process(trainable_qc, 0, ctx)
-        trainable_qc = self.bob.get_qc(trainable_qc, None, ctx)
-        return trainable_qc, ctx
 
     def _get_dataloader(self, batch_size) -> DataLoader:
         inputs = torch.stack([
@@ -73,15 +56,8 @@ class BB84TrainableProtocol(BB84Protocol):
 
     def run(self):
         params = self.get_parameters()
-        qc = self.qc.assign_parameters(params)
-        input = np.stack(self._input_values, axis=1)
-
-        pubs = [(qc, {p.name:v for p, v in zip(self._input_params, input[i])}) for i in range(self.n_bits)]
-        results = self.sampler.run(pubs).result()
-        bob_results = [int(most_common_value(results, i)) for i in range(self.n_bits)]
-
-        sifted = self._sift(bob_results)
-        return self._metrics(*sifted)
+        qc = self._qc.assign_parameters(params)
+        return self._run(qc)
 
     def save(self, path: str):
         torch.save(self.model.state_dict(), path)

@@ -2,7 +2,7 @@ from typing import List
 
 import torch
 import torch.nn as nn
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
 
 from protocol.connection_elements.ConnectionElement import ConnectionElement
@@ -17,7 +17,8 @@ class Layer(TrainableConnectionElement):
         Layer._index += 1
         self.params = [Parameter(f"x_{index}"), Parameter(f"y_{index}"), Parameter(f"z_{index}")]
 
-    def process(self, qc: QuantumCircuit, i: int, ctx: dict):
+    def qc(self, channel: QuantumRegister, i: int, ctx: dict):
+        qc = QuantumCircuit(channel, name="TrainableLayer")
         qc.rx(self.params[0], qubit=0)
         qc.ry(self.params[1], qubit=0)
         qc.rz(self.params[2], qubit=0)

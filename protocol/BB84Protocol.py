@@ -1,35 +1,66 @@
 from collections.abc import Iterable
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
+from qiskit import QuantumRegister, QuantumCircuit
 from qiskit_aer.noise import NoiseModel
+from qiskit_aer.primitives import SamplerV2
 
 from protocol.Bob import Bob
 from protocol.Alice import Alice
 from protocol.connection_elements.ConnectionElement import ConnectionElement
+from utils import most_common_value
 
 
 class BB84Protocol:
     def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None):
         self.n_bits = n_bits
+        self.alice = Alice()
+        self.bob = Bob()
         self.elements = elements if elements is not None else []
+        self.elements = [self.alice] + self.elements + [self.bob]
+
         seed = seed if seed is not None else 0
-        self.alice = Alice(n_bits, seed=seed)
-        self.bob = Bob(n_bits, seed=seed+1)
+        for i, elem in enumerate(self.elements):
+            elem.init(n_bits, seed+i)
+        self._qc, ctx = self.qc_with_ctx()
+        self._qc = self._qc.decompose(reps=5)
+        self._sampler = self._get_sampler(seed, ctx)
+        self._input_params, self._input_values = self._get_inputs(self.elements)
+
+    def _get_inputs(self, elements:List[ConnectionElement]) -> Tuple[List, List]:
+        input_params = []
+        input_values = []
+        for elem in elements:
+            input_params.extend(elem.input_params())
+            input_values.extend(elem.input_values())
+
+        assert len(input_params) == len(input_values)
+        for vals in input_values:
+            assert len(vals) == self.n_bits
+        return input_params, input_values
+
+    def qc_with_ctx(self, i: int = None) -> Tuple[QuantumCircuit, dict]:
+        ctx = self._get_ctx()
+        channel = QuantumRegister(1, "channel")
+        qc = QuantumCircuit(channel)
+        for elem in self.elements:
+            qc.add_register(*elem.regs())
+            qc.append(elem.qc(channel, i, ctx), [channel] + elem.qregs(), elem.cregs())
+        return qc, ctx
+
+    def _get_sampler(self, seed, ctx) -> SamplerV2:
+        return SamplerV2(default_shots=1, seed=seed,
+                  options={"backend_options": ctx})
 
     def run(self):
-        ctx = self._get_ctx()
-        bob_results = []
+        return self._run(self._qc)
 
-        for i in range(self.n_bits):
-            qc = self.alice.prepare(i)
-
-            for elem in self.elements:
-                qc = elem.process(qc, i, ctx)
-
-            result = self.bob.measure(qc, i, ctx)
-            bob_results.append(result)
-
+    def _run(self, qc: QuantumCircuit) -> float:
+        input = np.stack(self._input_values, axis=1)
+        pubs = [(qc, {p.name: v for p, v in zip(self._input_params, input[i])}) for i in range(self.n_bits)]
+        results = self._sampler.run(pubs).result()
+        bob_results = [int(most_common_value(results, i)) for i in range(self.n_bits)]
         sifted = self._sift(bob_results)
         return self._metrics(*sifted)
 

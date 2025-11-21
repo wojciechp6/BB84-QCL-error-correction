@@ -1,18 +1,30 @@
 import numpy as np
-from qiskit import QuantumCircuit
+from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
 
+from protocol.connection_elements.ConnectionElement import ConnectionElement
 
-class Alice:
-    def __init__(self, n_bits: int, seed=None):
-        random = np.random.RandomState(seed)
-        self.bits = random.randint(2, size=n_bits)
-        self.bases = random.randint(2, size=n_bits)
+
+class Alice(ConnectionElement):
+    def __init__(self):
+        self.bits = None
+        self.bases = None
         self.bit_p = Parameter("alice_bit")
         self.base_p = Parameter("alice_base")
 
-    def prepare(self, i=None) -> QuantumCircuit:
-        qc = QuantumCircuit(1, 1)
+    def init(self, n_bits: int, seed=None):
+        random = np.random.RandomState(seed)
+        self.bits = random.randint(2, size=n_bits)
+        self.bases = random.randint(2, size=n_bits)
+
+    def input_params(self) -> list:
+        return [self.bit_p, self.base_p]
+
+    def input_values(self) -> list:
+        return [self.bits, self.bases]
+
+    def qc(self, channel: QuantumRegister, i: int, ctx: dict) -> QuantumCircuit:
+        qc = QuantumCircuit(channel, name="Alice")
         qc.rx(self.bit_p * 3.14, 0)
         qc.ry(self.base_p * 3.14/2, 0)
         if i is not None:

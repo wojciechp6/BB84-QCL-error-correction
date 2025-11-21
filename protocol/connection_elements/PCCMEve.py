@@ -1,6 +1,6 @@
 import math
 
-from qiskit import QuantumRegister, QuantumCircuit, transpile
+from qiskit import QuantumRegister, QuantumCircuit, transpile, ClassicalRegister
 from qiskit.circuit.library import RYGate
 from qiskit_aer import AerSimulator
 
@@ -10,13 +10,14 @@ from protocol.connection_elements.ConnectionElement import ConnectionElement
 class PCCMEve(ConnectionElement):
     def __init__(self):
         self.pccm_block = self._phase_covariant_cloner_block()
+        self.clone = QuantumRegister(1, "eve_clone")
+        self.measure = ClassicalRegister(1, "eve_measure")
 
-    def process(self, qc, i: int, ctx: dict):
+    def qc(self, channel: QuantumRegister, i: int, ctx: dict):
         n = 1
-        blk = QuantumRegister(n, "blank")
-        qc.add_register(blk)
+        qc = QuantumCircuit(channel, self.clone, self.measure, name="PCCMEve")
         for i in range(n):
-            qc = qc.compose(self.pccm_block, [qc.qubits[i], blk[i]])
+            qc = qc.append(self.pccm_block, [channel[i], self.clone])
         return qc
 
     @staticmethod
