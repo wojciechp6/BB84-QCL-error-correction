@@ -25,21 +25,15 @@ class BB84TrainableProtocol(BB84Protocol):
         self.sampler = SamplerV2(default_shots=1, seed=seed, options={"backend_options": {"noise_model": self.ctx.get("noise_model", None)}})
         self._trainable_params = [e.trainable_parameters() for e in self.elements if isinstance(e, TrainableConnectionElement)]
         self._trainable_params = list(itertools.chain.from_iterable(self._trainable_params))
+        self._input_params = [self.alice.bit_p, self.alice.base_p, self.bob.base_p]
+        self._input_values = [self.alice.bits, self.alice.bases, self.bob.bases]
         qnn = SamplerQNN(circuit=self.qc,
                          sampler=self.sampler,
-                         input_params=[self.alice.bit_p, self.alice.base_p, self.bob.base_p],
+                         input_params=self._input_params,
                          weight_params=self._trainable_params)
         self.model = TorchConnector(qnn)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.dataloader = self._get_dataloader(batch_size)
-        self.sampler.run_classic = self.sampler.run
-        self.sampler.run = self.sampler_run
-
-    def sampler_run(self, pubs, *, shots: int | None = None):
-        print(f" Input: {[pub[1] for pub in pubs]}")
-        r = self.sampler.run_classic(pubs, shots=shots)
-        print(f" Output: {[most_common_value(r.result(), i) for i in range(len(pubs))]}")
-        return r
 
     def _get_ctx(self) -> dict:
         ctx = super()._get_ctx()
@@ -80,9 +74,10 @@ class BB84TrainableProtocol(BB84Protocol):
     def run(self):
         params = self.get_parameters()
         qc = self.qc.assign_parameters(params)
-        input = np.stack([self.alice.bits, self.alice.bases, self.bob.bases], axis=1)
+        input = np.stack(self._input_values, axis=1)
 
-        results = self.sampler.run([(qc, input[i]) for i in range(self.n_bits)]).result()
+        pubs = [(qc, {p.name:v for p, v in zip(self._input_params, input[i])}) for i in range(self.n_bits)]
+        results = self.sampler.run(pubs).result()
         bob_results = [int(most_common_value(results, i)) for i in range(self.n_bits)]
 
         sifted = self._sift(bob_results)
