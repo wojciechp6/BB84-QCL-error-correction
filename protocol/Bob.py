@@ -1,10 +1,8 @@
 import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister, ClassicalRegister
 from qiskit.circuit import Parameter
-from qiskit_aer.primitives import SamplerV2
 
 from protocol.connection_elements.ConnectionElement import ConnectionElement
-from utils import most_common_value
 
 
 class Bob(ConnectionElement):
@@ -19,7 +17,7 @@ class Bob(ConnectionElement):
 
     def qc(self, channel: QuantumRegister, i, ctx: dict) -> QuantumCircuit:
         qc = QuantumCircuit(channel, self.measure, name="Bob")
-        qc.ry(self.base_p * -3.14/2, 0)
+        qc.ry(self.base_p * -np.pi/2, 0)
         qc.measure(channel, self.measure)
         if i is not None:
             qc.assign_parameters({"bob_base": self.bases[i]}, inplace=True)

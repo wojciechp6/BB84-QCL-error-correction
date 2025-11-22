@@ -1,3 +1,5 @@
+import math
+
 import numpy as np
 from qiskit import QuantumCircuit, QuantumRegister
 from qiskit.circuit import Parameter
@@ -24,9 +26,11 @@ class Alice(ConnectionElement):
         return [self.bits, self.bases]
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict) -> QuantumCircuit:
+        ctx['alice_base_p'] = self.base_p
+        ctx['alice_bases'] = self.bases
         qc = QuantumCircuit(channel, name="Alice")
-        qc.rx(self.bit_p * 3.14, 0)
-        qc.ry(self.base_p * 3.14/2, 0)
+        qc.rx(self.bit_p * math.pi, channel)
+        qc.ry(self.base_p * math.pi/2, channel)
         if i is not None:
             qc.assign_parameters({"alice_base": self.bases[i], "alice_bit": self.bits[i]}, inplace=True)
         return qc

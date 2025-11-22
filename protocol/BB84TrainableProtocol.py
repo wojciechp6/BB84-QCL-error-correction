@@ -1,19 +1,15 @@
 import itertools
-from typing import List, Tuple
+from typing import List
 
-import numpy as np
 import torch
-from qiskit import QuantumCircuit
-from torch import nn, optim
+from torch import optim
 from torch.utils.data import DataLoader, TensorDataset
-from qiskit_aer.primitives import SamplerV2
 from qiskit_machine_learning.connectors import TorchConnector
 from qiskit_machine_learning.neural_networks import SamplerQNN
 
 from protocol.BB84Protocol import BB84Protocol
 from protocol.connection_elements.ConnectionElement import ConnectionElement
 from protocol.connection_elements.TrainableConnectionElement import TrainableConnectionElement
-from utils import most_common_value
 
 
 class BB84TrainableProtocol(BB84Protocol):
@@ -23,20 +19,16 @@ class BB84TrainableProtocol(BB84Protocol):
 
         self._trainable_params = [e.trainable_parameters() for e in self.elements if isinstance(e, TrainableConnectionElement)]
         self._trainable_params = list(itertools.chain.from_iterable(self._trainable_params))
-        qnn = SamplerQNN(circuit=self._qc,
+        self.qnn = SamplerQNN(circuit=self._qc,
                          sampler=self._sampler,
                          input_params=self._input_params,
                          weight_params=self._trainable_params)
-        self.model = TorchConnector(qnn)
+        self.model = TorchConnector(self.qnn)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.dataloader = self._get_dataloader(batch_size)
 
     def _get_dataloader(self, batch_size) -> DataLoader:
-        inputs = torch.stack([
-            torch.tensor([bit, basis_a, basis_b], dtype=torch.int)
-            for bit, basis_a, basis_b
-            in zip(self.alice.bits, self.alice.bases, self.bob.bases)
-        ])
+        inputs = torch.stack([torch.tensor(v, dtype=torch.int) for v in self._input_values], dim=1)
         target = torch.tensor(self.alice.bits, dtype=torch.int)
         mask = (torch.tensor(self.alice.bases) == torch.tensor(self.bob.bases))
 
@@ -57,7 +49,7 @@ class BB84TrainableProtocol(BB84Protocol):
     def run(self):
         params = self.get_parameters()
         qc = self._qc.assign_parameters(params)
-        return self._run(qc)
+        return self._run_and_calculate_qber(qc)
 
     def save(self, path: str):
         torch.save(self.model.state_dict(), path)

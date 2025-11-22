@@ -8,6 +8,7 @@ from qiskit_aer.primitives import SamplerV2
 
 from protocol.Bob import Bob
 from protocol.Alice import Alice
+from protocol.connection_elements.BaseEve import BaseEve
 from protocol.connection_elements.ConnectionElement import ConnectionElement
 from utils import most_common_value
 
@@ -25,6 +26,7 @@ class BB84Protocol:
             elem.init(n_bits, seed+i)
         self._qc, ctx = self.qc_with_ctx()
         self._qc = self._qc.decompose(reps=5)
+        self._has_eve = any([isinstance(e, BaseEve) for e in self.elements])
         self._sampler = self._get_sampler(seed, ctx)
         self._input_params, self._input_values = self._get_inputs(self.elements)
 
@@ -51,18 +53,24 @@ class BB84Protocol:
 
     def _get_sampler(self, seed, ctx) -> SamplerV2:
         return SamplerV2(default_shots=1, seed=seed,
-                  options={"backend_options": ctx})
+                  options={"backend_options": {'noise_model': ctx['noise_model']}})
 
     def run(self):
-        return self._run(self._qc)
+        return self._run_and_calculate_qber(self._qc)
 
-    def _run(self, qc: QuantumCircuit) -> float:
+    def _run_and_calculate_qber(self, qc: QuantumCircuit):
+        registers = ("c", "eve_measure") if self._has_eve else ("c",)
+        results = self._run_qc(qc, registers)
+        qbers = {"bob_qber": self._metrics(*self._sift(results["c"]))}
+        if self._has_eve:
+            qbers["eve_qber"] = self._metrics(*self._sift(results["eve_measure"]))
+        return qbers
+
+    def _run_qc(self, qc: QuantumCircuit, registers=("c",)) -> dict:
         input = np.stack(self._input_values, axis=1)
         pubs = [(qc, {p.name: v for p, v in zip(self._input_params, input[i])}) for i in range(self.n_bits)]
         results = self._sampler.run(pubs).result()
-        bob_results = [int(most_common_value(results, i)) for i in range(self.n_bits)]
-        sifted = self._sift(bob_results)
-        return self._metrics(*sifted)
+        return {r: [int(most_common_value(results, i, r)) for i in range(self.n_bits)] for r in registers}
 
     def _get_ctx(self) -> dict:
         ctx = {'noise_model': NoiseModel()}

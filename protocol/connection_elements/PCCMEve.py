@@ -4,20 +4,23 @@ from qiskit import QuantumRegister, QuantumCircuit, transpile, ClassicalRegister
 from qiskit.circuit.library import RYGate
 from qiskit_aer import AerSimulator
 
+from protocol.connection_elements.BaseEve import BaseEve
 from protocol.connection_elements.ConnectionElement import ConnectionElement
 
 
-class PCCMEve(ConnectionElement):
-    def __init__(self):
-        self.pccm_block = self._phase_covariant_cloner_block()
-        self.clone = QuantumRegister(1, "eve_clone")
-        self.measure = ClassicalRegister(1, "eve_measure")
+class PCCMEve(BaseEve):
+    def __init__(self, theta: float = math.pi / 2):
+        super().__init__()
+        self.pccm_block = self._phase_covariant_cloner_block(theta)
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
+        alice_base_p = ctx["alice_base_p"]
         n = 1
-        qc = QuantumCircuit(channel, self.clone, self.measure, name="PCCMEve")
+        qc = QuantumCircuit(channel, self.eve_clone, self.eve_measure, name="PCCMEve")
         for i in range(n):
-            qc = qc.append(self.pccm_block, [channel[i], self.clone])
+            qc.append(self.pccm_block, [channel[i], self.eve_clone])
+        qc.ry(-alice_base_p * math.pi / 2, self.eve_clone)
+        qc.measure(self.eve_clone, self.eve_measure)
         return qc
 
     @staticmethod
