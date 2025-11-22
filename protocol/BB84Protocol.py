@@ -3,6 +3,7 @@ from typing import List, Tuple
 
 import numpy as np
 from qiskit import QuantumRegister, QuantumCircuit
+from qiskit.primitives import PrimitiveResult
 from qiskit_aer.noise import NoiseModel
 from qiskit_aer.primitives import SamplerV2
 
@@ -10,7 +11,6 @@ from protocol.Bob import Bob
 from protocol.Alice import Alice
 from protocol.connection_elements.BaseEve import BaseEve
 from protocol.connection_elements.ConnectionElement import ConnectionElement
-from utils import most_common_value
 
 
 class BB84Protocol:
@@ -70,7 +70,11 @@ class BB84Protocol:
         input = np.stack(self._input_values, axis=1)
         pubs = [(qc, {p.name: v for p, v in zip(self._input_params, input[i])}) for i in range(self.n_bits)]
         results = self._sampler.run(pubs).result()
-        return {r: [int(most_common_value(results, i, r)) for i in range(self.n_bits)] for r in registers}
+        return {r: [int(self._first_result(results, i, r)) for i in range(self.n_bits)] for r in registers}
+
+    @staticmethod
+    def _first_result(results: PrimitiveResult, index: int, register_name: str = "c") -> str:
+        return results[index].data[register_name].get_bitstrings(0)[0]
 
     def _get_ctx(self) -> dict:
         ctx = {'noise_model': NoiseModel()}

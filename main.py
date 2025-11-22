@@ -12,7 +12,7 @@ from protocol.connection_elements.PCCMEve import PCCMEve
 from protocol.connection_elements.QCLEve import QCLEve
 
 if __name__ == "__main__":
-    pipeline_train = BB84Protocol(n_bits=100, seed=0, elements=[PCCMEve()])
+    pipeline_train = BB84Protocol(n_bits=1000, seed=0, elements=[PCCMEve()])
     print(pipeline_train.qc_with_ctx()[0])
     qber = pipeline_train.run()
     print(f"QBER: {qber}")

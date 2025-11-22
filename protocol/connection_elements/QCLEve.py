@@ -26,9 +26,9 @@ class QCLEve(BaseEve, TrainableConnectionElement):
         qc.ry(alice_base_p * self.params[1], self.eve_clone)
         qc.rz(alice_base_p * self.params[2], self.eve_clone)
 
-        qc.rx((-alice_base_p+1) * self.params[3], self.eve_clone)
-        qc.ry((-alice_base_p+1) * self.params[4], self.eve_clone)
-        qc.rz((-alice_base_p+1) * self.params[5], self.eve_clone)
+        qc.rx((1-alice_base_p) * self.params[3], self.eve_clone)
+        qc.ry((1-alice_base_p) * self.params[4], self.eve_clone)
+        qc.rz((1-alice_base_p) * self.params[5], self.eve_clone)
 
         qc.measure(self.eve_clone, self.eve_measure)
 
@@ -55,6 +55,7 @@ class QLCAnsatz:
         qc.rx(self.params[3], clone)
         qc.ry(self.params[4], clone)
         qc.rz(self.params[5], clone)
+        qc.cx(channel, clone)
         return qc
 
     def trainable_parameters(self) -> List[Parameter]:

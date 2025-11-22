@@ -10,32 +10,30 @@ from protocol.connection_elements.TrainableConnectionElement import TrainableCon
 
 
 class BB84EveTrainableProtocol(BB84TrainableProtocol):
-    def __init__(self, n_bits=50, seed=None,
+    def __init__(self, n_bits=50, seed=None, f_value:float=0.8,
                  *, batch_size=64, learning_rate=0.1):
         self.eve = QCLEve()
-        self.layers = [Layer(), Layer()]
         super().__init__(n_bits, [self.eve], seed, batch_size=batch_size, learning_rate=learning_rate)
+        self.f_value = f_value
 
     def train(self):
         losses = []
         for inputs, target, mask in self.dataloader:
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
-            loss = self.loss(inputs, target, mask, outputs)
+            loss = self.loss(target, mask, outputs)
             loss.backward()
             self.optimizer.step()
             losses.append(loss)
         return torch.stack(losses).mean()
 
-    @staticmethod
-    def loss(inputs, target, mask, outputs):
+    def loss(self, target, mask, outputs):
         alpha = 10
-        f = 0.8
         bob_output = outputs[:, 0]
         eve_output = outputs[:, 2]
         Fab = (bob_output - target)[mask].abs().mean()
         Fae = (eve_output - target)[mask].abs().mean()
-        loss = alpha * (Fab - f) ** 2 - Fae
+        loss = alpha * (Fab - self.f_value) ** 2 - Fae
         return loss
 
     def froze_elements(self, elements_to_froze:List[TrainableConnectionElement]):

@@ -15,6 +15,10 @@ if __name__ == "__main__":
     print("Trained pipeline")
     pipeline_train = BB84EveTrainableProtocol(n_bits=256, seed=0, learning_rate=0.1, batch_size=32)
 
+    qc, _ = pipeline_train.qc_with_ctx()
+    qc.draw("mpl", filename="qc_full.png")
+    qc.decompose().draw("mpl", filename="qc_full1.png")
+    qc.decompose().decompose().draw("mpl", filename="qc_full2.png")
     qc, _ = pipeline_train.qc_with_ctx(1)
     qc.draw("mpl", filename="qc.png")
     qc.decompose().draw("mpl", filename="qc1.png")
