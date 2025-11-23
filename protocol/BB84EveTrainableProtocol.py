@@ -11,7 +11,7 @@ from protocol.connection_elements.TrainableConnectionElement import TrainableCon
 
 class BB84EveTrainableProtocol(BB84TrainableProtocol):
     def __init__(self, n_bits=50, seed=None, f_value:float=0.8,
-                 *, batch_size=64, learning_rate=0.1):
+                 *, batch_size=64, learning_rate:float=0.1):
         self.eve = QCLEve()
         super().__init__(n_bits, [self.eve], seed, batch_size=batch_size, learning_rate=learning_rate)
         self.f_value = f_value
@@ -20,7 +20,7 @@ class BB84EveTrainableProtocol(BB84TrainableProtocol):
         losses = []
         for inputs, target, mask in self.dataloader:
             self.optimizer.zero_grad()
-            outputs = self.model(inputs)
+            outputs = self.model.forward_as_dict(inputs)
             loss = self.loss(target, mask, outputs)
             loss.backward()
             self.optimizer.step()
