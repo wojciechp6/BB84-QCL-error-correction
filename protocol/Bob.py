@@ -9,7 +9,7 @@ class Bob(ConnectionElement):
     def __init__(self):
         self.base_p = Parameter("bob_base")
         self.bases = None
-        self.measure = ClassicalRegister(1, "c")
+        self.measure = ClassicalRegister(1, "bob_measure")
 
     def init(self, n_bits: int, seed=None):
         random = np.random.RandomState(seed)

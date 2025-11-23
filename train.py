@@ -9,11 +9,11 @@ from protocol.BB84Protocol import BB84Protocol
 from protocol.BB84TrainableProtocol import BB84TrainableProtocol
 from protocol.connection_elements.Layer import Layer
 from protocol.connection_elements.Noise import Noise
-
+from protocol.connection_elements.QCLEve import QCLEve
 
 if __name__ == "__main__":
     print("Trained pipeline")
-    pipeline_train = BB84EveTrainableProtocol(n_bits=256, seed=0, learning_rate=0.1, batch_size=32)
+    pipeline_train = BB84EveTrainableProtocol(n_bits=128, elements=[QCLEve()], seed=0, learning_rate=0.1, batch_size=32)
 
     qc, _ = pipeline_train.qc_with_ctx()
     qc.draw("mpl", filename="qc_full.png")
@@ -28,11 +28,11 @@ if __name__ == "__main__":
     qber = pipeline_train.run()
     print(f"Before training: QBER: {qber}")
 
-    for epoch in range(51):
+    for epoch in range(100):
         loss = pipeline_train.train()
         if epoch % 1 == 0:
             print(f'epoch: {epoch}, loss: {loss}')
-        if epoch % 5 == 0:
+        if epoch % 2 == 0:
             qber = pipeline_train.run()
             print(f"training epoch {epoch}: {qber}")
 

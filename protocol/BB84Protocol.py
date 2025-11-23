@@ -20,13 +20,13 @@ class BB84Protocol:
         self.bob = Bob()
         self.elements = elements if elements is not None else []
         self.elements = [self.alice] + self.elements + [self.bob]
+        self.eve = next(e for e in self.elements if isinstance(e, BaseEve))
 
         seed = seed if seed is not None else 0
         for i, elem in enumerate(self.elements):
             elem.init(n_bits, seed+i)
         self._qc, ctx = self.qc_with_ctx()
         self._qc = self._qc.decompose(reps=5)
-        self._has_eve = any([isinstance(e, BaseEve) for e in self.elements])
         self._sampler = self._get_sampler(seed, ctx)
         self._input_params, self._input_values = self._get_inputs(self.elements)
 
@@ -59,21 +59,24 @@ class BB84Protocol:
         return self._run_and_calculate_qber(self._qc)
 
     def _run_and_calculate_qber(self, qc: QuantumCircuit):
-        registers = ("c", "eve_measure") if self._has_eve else ("c",)
+        has_eve = self.eve is not None
+        registers = [self.bob.measure.name]
+        if has_eve:
+            registers.append(self.eve.eve_measure.name)
         results = self._run_qc(qc, registers)
-        qbers = {"bob_qber": self._metrics(*self._sift(results["c"]))}
-        if self._has_eve:
-            qbers["eve_qber"] = self._metrics(*self._sift(results["eve_measure"]))
+        qbers = {"bob_qber": self._metrics(*self._sift(results[self.bob.measure.name]))}
+        if has_eve:
+            qbers["eve_qber"] = self._metrics(*self._sift(results[self.eve.eve_measure.name]))
         return qbers
 
-    def _run_qc(self, qc: QuantumCircuit, registers=("c",)) -> dict:
+    def _run_qc(self, qc: QuantumCircuit, registers=("bob_measure",)) -> dict:
         input = np.stack(self._input_values, axis=1)
         pubs = [(qc, {p.name: v for p, v in zip(self._input_params, input[i])}) for i in range(self.n_bits)]
         results = self._sampler.run(pubs).result()
         return {r: [int(self._first_result(results, i, r)) for i in range(self.n_bits)] for r in registers}
 
     @staticmethod
-    def _first_result(results: PrimitiveResult, index: int, register_name: str = "c") -> str:
+    def _first_result(results: PrimitiveResult, index: int, register_name: str = "bob_measure") -> str:
         return results[index].data[register_name].get_bitstrings(0)[0]
 
     def _get_ctx(self) -> dict:
