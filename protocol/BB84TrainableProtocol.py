@@ -10,6 +10,8 @@ from qiskit_machine_learning.neural_networks import SamplerQNN
 from protocol.BB84Protocol import BB84Protocol
 from protocol.connection_elements.ConnectionElement import ConnectionElement
 from protocol.connection_elements.TrainableConnectionElement import TrainableConnectionElement
+from qiskit_extension.MultiOutputSamplerQNN import MultiOutputSamplerQNN
+from qiskit_extension.MultiOutputTorchConnector import MultiOutputTorchConnector
 
 
 class BB84TrainableProtocol(BB84Protocol):
@@ -19,11 +21,12 @@ class BB84TrainableProtocol(BB84Protocol):
 
         self._trainable_params = [e.trainable_parameters() for e in self.elements if isinstance(e, TrainableConnectionElement)]
         self._trainable_params = list(itertools.chain.from_iterable(self._trainable_params))
-        self.qnn = SamplerQNN(circuit=self._qc,
+        self.qnn = MultiOutputSamplerQNN(circuit=self._qc,
                          sampler=self._sampler,
                          input_params=self._input_params,
-                         weight_params=self._trainable_params)
-        self.model = TorchConnector(self.qnn)
+                         weight_params=self._trainable_params,
+                                         input_gradients=True)
+        self.model = MultiOutputTorchConnector(self.qnn)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.dataloader = self._get_dataloader(batch_size)
 
