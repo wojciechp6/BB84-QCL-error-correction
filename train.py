@@ -4,6 +4,7 @@ import torch
 import torch.optim as optim
 from qiskit_aer.noise import depolarizing_error, phase_damping_error, thermal_relaxation_error, pauli_error, amplitude_damping_error
 
+from experiments.plt_pab_fae import plt_fab_fae
 from protocol.BB84EveTrainableProtocol import BB84EveTrainableProtocol
 from protocol.BB84Protocol import BB84Protocol
 from protocol.BB84TrainableProtocol import BB84TrainableProtocol
@@ -13,7 +14,9 @@ from protocol.connection_elements.QCLEve import QCLEve
 
 if __name__ == "__main__":
     print("Trained pipeline")
-    pipeline_train = BB84EveTrainableProtocol(n_bits=128, elements=[QCLEve()], seed=0, learning_rate=0.1, batch_size=32)
+    target_fab = 0.85
+    pipeline_train = BB84EveTrainableProtocol(n_bits=128, elements=[QCLEve()], f_value=target_fab,
+                                              seed=0, learning_rate=0.1, batch_size=128)
 
     qc, _ = pipeline_train.qc_with_ctx()
     qc.draw("mpl", filename="qc_full.png")
@@ -28,13 +31,15 @@ if __name__ == "__main__":
     qber = pipeline_train.run()
     print(f"Before training: QBER: {qber}")
 
-    for epoch in range(100):
+    bob_qbers, eve_qbers = [], []
+
+    for epoch in range(50):
         loss = pipeline_train.train()
-        if epoch % 1 == 0:
-            print(f'epoch: {epoch}, loss: {loss}')
-        if epoch % 2 == 0:
-            qber = pipeline_train.run()
-            print(f"training epoch {epoch}: {qber}")
+        print(f'epoch: {epoch}, loss: {loss}')
+        qber = pipeline_train.run()
+        print(f"training epoch {epoch}: {qber}")
+        bob_qbers.append(qber['bob_qber'])
+        eve_qbers.append(qber['eve_qber'])
 
     print(f"Final parameters {pipeline_train.get_parameters()}")
     print(f"After training QBER: {qber}")
@@ -44,3 +49,5 @@ if __name__ == "__main__":
     pipeline_train.model.load_state_dict(sd)
     qber = pipeline_train.run()
     print(f"Zeroed parameters: QBER: {qber}")
+
+    plt_fab_fae(bob_qbers, eve_qbers, target_fab).savefig("fab_fae.png")

@@ -33,11 +33,8 @@ class BB84EveTrainableProtocol(BB84TrainableProtocol):
 
         target_long = target.long()
 
-        # bob_p_correct = bob_probs.gather(1, target_long.unsqueeze(1)).squeeze(1)
-        # eve_p_correct = eve_probs.gather(1, target_long.unsqueeze(1)).squeeze(1)
-
-        bob_p_correct = (bob_probs[:, 0] - target).abs()
-        eve_p_correct = (eve_probs[:, 0] - target).abs()
+        bob_p_correct = bob_probs.gather(1, target_long.unsqueeze(1)).squeeze(1)
+        eve_p_correct = eve_probs.gather(1, target_long.unsqueeze(1)).squeeze(1)
 
         bob_f = bob_p_correct[mask].mean()
         eve_f = eve_p_correct[mask].mean()

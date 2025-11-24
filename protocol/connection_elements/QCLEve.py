@@ -18,7 +18,7 @@ class QCLEve(BaseEve, TrainableConnectionElement):
         self.v_params_x = [Parameter(f"ΛX_{k}") for k in range(3)]
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
-        alice_base_p = ctx["alice_base_p"]   # << KLUCZOWY element
+        alice_base_p = ctx["alice_base_p"]
         alice_bases = ctx["alice_bases"]
 
         qc = QuantumCircuit(channel, self.eve_clone, self.eve_measure, name="QCLEve")
@@ -44,9 +44,6 @@ class QCLEve(BaseEve, TrainableConnectionElement):
     def trainable_parameters(self) -> List[Parameter]:
         u_params = [p for layer in self.u_layers for p in layer.trainable_parameters()]
         return u_params + self.v_params_z + self.v_params_x
-
-    def loss(self, input, target, mask, output):
-        pass
 
 
 class QLCAnsatz:

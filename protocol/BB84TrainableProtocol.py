@@ -28,7 +28,7 @@ class BB84TrainableProtocol(BB84Protocol):
         target = torch.tensor(self.alice.bits, dtype=torch.int)
         mask = (torch.tensor(self.alice.bases) == torch.tensor(self.bob.bases))
 
-        return DataLoader(TensorDataset(inputs, target, mask), batch_size)
+        return DataLoader(TensorDataset(inputs, target, mask), batch_size, shuffle=True)
 
     def train(self):
         losses = []
