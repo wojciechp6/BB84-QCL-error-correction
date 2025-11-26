@@ -15,8 +15,8 @@ from protocol.connection_elements.QCLEve import QCLEve
 if __name__ == "__main__":
     print("Trained pipeline")
     target_fab = 0.85
-    pipeline_train = BB84EveTrainableProtocol(n_bits=128, elements=[QCLEve()], f_value=target_fab,
-                                              seed=0, learning_rate=0.1, batch_size=128)
+    pipeline_train = BB84EveTrainableProtocol(n_bits=1024, elements=[QCLEve()], f_value=target_fab,
+                                              seed=0, learning_rate=0.1, batch_size=1024, torch_device="cuda", backend_device="GPU")
 
     qc, _ = pipeline_train.qc_with_ctx()
     qc.draw("mpl", filename="qc_full.png")

@@ -14,7 +14,7 @@ from protocol.connection_elements.ConnectionElement import ConnectionElement
 
 
 class BB84Protocol:
-    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None):
+    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None, *, device:str='CPU'):
         self.n_bits = n_bits
         self.alice = Alice()
         self.bob = Bob()
@@ -27,7 +27,7 @@ class BB84Protocol:
             elem.init(n_bits, seed+i)
         self._qc, ctx = self.qc_with_ctx()
         self._qc = self._qc.decompose(reps=5)
-        self._sampler = self._get_sampler(seed, ctx)
+        self._sampler = self._get_sampler(seed, ctx, device)
         self._input_params, self._input_values = self._get_inputs(self.elements)
 
     def _get_inputs(self, elements:List[ConnectionElement]) -> Tuple[List, List]:
@@ -51,9 +51,9 @@ class BB84Protocol:
             qc.append(elem.qc(channel, i, ctx), [channel] + elem.qregs(), elem.cregs())
         return qc, ctx
 
-    def _get_sampler(self, seed, ctx) -> SamplerV2:
+    def _get_sampler(self, seed, ctx, device) -> SamplerV2:
         return SamplerV2(default_shots=1, seed=seed,
-                  options={"backend_options": {'noise_model': ctx['noise_model']}})
+                  options={"backend_options": {'noise_model': ctx['noise_model'], "device": device}})
 
     def run(self):
         return self._run_and_calculate_qber(self._qc)

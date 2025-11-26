@@ -17,7 +17,7 @@ def plt_fab_fae(
     bob_qbers = np.asarray(bob_qbers, dtype=float)
     eve_qbers = np.asarray(eve_qbers, dtype=float)
 
-    target = (target_fab, FAE_max(target_fab))
+    target = (FAE_max(target_fab), target_fab)
 
     # Fidelności z QBER-ów
     fab = 1.0 - bob_qbers
@@ -38,7 +38,7 @@ def plt_fab_fae(
         linewidth=2,
     )
 
-    plt.scatter(fab, fae, s=40, zorder=3, alpha=0.3, label="symulacje")
+    plt.scatter(fae, fab, s=40, zorder=3, alpha=0.3, label="symulacje")
     plt.scatter(
         *target,
         s=100,
@@ -48,8 +48,8 @@ def plt_fab_fae(
         marker="x",
     )
 
-    plt.xlabel(r"$F_{AB}$")
-    plt.ylabel(r"$F_{AE}$")
+    plt.xlabel(r"$F_{AE}$")
+    plt.ylabel(r"$F_{AB}$")
     plt.title(title)
 
     # zakresy osi podobne do Fig.4

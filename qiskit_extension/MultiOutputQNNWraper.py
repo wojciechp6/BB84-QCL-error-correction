@@ -21,6 +21,9 @@ class MultiOutputQNNWrapper(nn.Module):
         sampler,
         input_params,
         weight_params,
+        *,
+        initial_weights=None,
+        device: torch.device=torch.device("cpu"),
     ):
         """
         qc – oryginalny obwód Z WIELOMA classical registers
@@ -46,7 +49,7 @@ class MultiOutputQNNWrapper(nn.Module):
         )
 
         # --- 3) Torch connector ---
-        self.base = TorchConnector(self.qnn)
+        self.base = TorchConnector(self.qnn, initial_weights).to(device)
 
     # ================================================================
     # REJESTRY → 1x CREG
