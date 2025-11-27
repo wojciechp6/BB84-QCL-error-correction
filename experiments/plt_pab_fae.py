@@ -40,7 +40,8 @@ def plt_fab_fae(
 
     plt.scatter(fae, fab, s=40, zorder=3, alpha=0.3, label="symulacje")
     plt.scatter(
-        *target,
+        target[1],
+        target[0],
         s=100,
         zorder=4,
         label="docelowy punkt",

@@ -4,6 +4,7 @@ from typing import List
 import torch
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
+from qiskit_machine_learning.optimizers.optimizer_utils import learning_rate
 from torch import optim
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -22,6 +23,7 @@ class BB84TrainableProtocol(BB84Protocol):
         self._trainable_params = list(itertools.chain.from_iterable(self._trainable_params))
         self._device = torch.device(torch_device)
         self._frozen_params = {}
+        self._learning_rate = learning_rate
         self.model = MultiOutputQNNWrapper(self._qc, self._sampler, self._input_params, self._trainable_params, device=self._device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.dataloader = self._get_dataloader(batch_size)
@@ -81,12 +83,14 @@ class BB84TrainableProtocol(BB84Protocol):
         self._frozen_params = to_freeze_params
         self.model = MultiOutputQNNWrapper(qc, self._sampler, self._input_params, trainable_params,
                                            device=self._device, initial_weights=weights)
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self._learning_rate)
 
     def defrost_all_elements(self):
         params = self.get_all_parameters()
         self._frozen_params = {}
         self.model = MultiOutputQNNWrapper(self._qc, self._sampler, self._input_params, self._trainable_params,
                                            device=self._device, initial_weights=list(params.values()))
+        self.optimizer = optim.Adam(self.model.parameters(), lr=self._learning_rate)
 
 
 
