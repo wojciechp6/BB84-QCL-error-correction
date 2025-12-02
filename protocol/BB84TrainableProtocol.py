@@ -4,6 +4,7 @@ from typing import List
 import torch
 from qiskit import QuantumCircuit
 from qiskit.circuit import Parameter
+from qiskit_aer.primitives import EstimatorV2
 from qiskit_machine_learning.optimizers.optimizer_utils import learning_rate
 from torch import optim
 from torch.utils.data import DataLoader, TensorDataset
@@ -11,6 +12,7 @@ from torch.utils.data import DataLoader, TensorDataset
 from protocol.BB84Protocol import BB84Protocol
 from protocol.connection_elements.ConnectionElement import ConnectionElement
 from protocol.connection_elements.TrainableConnectionElement import TrainableConnectionElement
+from qiskit_extension.MultiOutputEstimatorQNNWraper import MultiOutputEstimatorQNNWrapper
 from qiskit_extension.MultiOutputQNNWraper import MultiOutputQNNWrapper
 
 
@@ -24,15 +26,19 @@ class BB84TrainableProtocol(BB84Protocol):
         self._device = torch.device(torch_device)
         self._frozen_params = {}
         self._learning_rate = learning_rate
-        self.model = MultiOutputQNNWrapper(self._qc, self._sampler, self._input_params, self._trainable_params, device=self._device)
+        self._estimator = self._get_estimator(self._ctx, backend_device)
+        self.model = MultiOutputEstimatorQNNWrapper(self._qc, self._input_params, self._trainable_params,
+                                                    device=self._device, estimator=self._estimator)
         self.optimizer = optim.Adam(self.model.parameters(), lr=learning_rate)
         self.dataloader = self._get_dataloader(batch_size)
+
+    def _get_estimator(self, ctx, device) -> EstimatorV2:
+        return EstimatorV2(options={"backend_options": {'noise_model': ctx['noise_model'], "device": device}})
 
     def _get_dataloader(self, batch_size) -> DataLoader:
         inputs = torch.stack([torch.tensor(v, dtype=torch.int) for v in self._input_values], dim=1).to(self._device)
         target = torch.tensor(self.alice.bits, dtype=torch.int, device=self._device)
         mask = (torch.tensor(self.alice.bases) == torch.tensor(self.bob.bases)).to(self._device)
-
         return DataLoader(TensorDataset(inputs, target, mask), batch_size, shuffle=True)
 
     def train(self):

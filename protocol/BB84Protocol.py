@@ -25,9 +25,9 @@ class BB84Protocol:
         seed = seed if seed is not None else 0
         for i, elem in enumerate(self.elements):
             elem.init(n_bits, seed+i)
-        self._qc, ctx = self.qc_with_ctx()
+        self._qc, self._ctx = self.qc_with_ctx()
         self._qc = self._qc.decompose(reps=5)
-        self._sampler = self._get_sampler(seed, ctx, device)
+        self._sampler = self._get_sampler(seed, self._ctx, device)
         self._input_params, self._input_values = self._get_inputs(self.elements)
 
     def _get_inputs(self, elements:List[ConnectionElement]) -> Tuple[List, List]:

@@ -16,7 +16,7 @@ if __name__ == "__main__":
     print("Trained pipeline")
     target_fab = 0.85
     pipeline_train = BB84EveTrainableProtocol(n_bits=1024, elements=[QCLEve()], f_value=target_fab,
-                                              seed=0, learning_rate=0.1, batch_size=1024, torch_device="cuda", backend_device="GPU")
+                                              seed=0, learning_rate=0.1, batch_size=1024, torch_device="cpu", backend_device="CPU")
 
     qc, _ = pipeline_train.qc_with_ctx()
     qc.draw("mpl", filename="qc_full.png")
@@ -27,7 +27,7 @@ if __name__ == "__main__":
     qc.decompose().draw("mpl", filename="qc1.png")
     qc.decompose().decompose().draw("mpl", filename="qc2.png")
 
-    print(f"Start parameters {pipeline_train.get_parameters()}")
+    print(f"Start parameters {pipeline_train.get_all_parameters()}")
     qber = pipeline_train.run()
     print(f"Before training: QBER: {qber}")
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         bob_qbers.append(qber['bob_qber'])
         eve_qbers.append(qber['eve_qber'])
 
-    print(f"Final parameters {pipeline_train.get_parameters()}")
+    print(f"Final parameters {pipeline_train.get_all_parameters()}")
     print(f"After training QBER: {qber}")
 
     sd = pipeline_train.model.state_dict()

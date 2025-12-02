@@ -32,16 +32,15 @@ class BB84EveTrainableProtocol(BB84TrainableProtocol):
         return torch.stack(losses).mean()
 
     def loss(self, target, mask, outputs):
-        bob_probs = outputs[self.bob.measure.name]  # (batch, 2)
-        eve_probs = outputs[self.eve.eve_measure.name]  # (batch, 2)
+        bob_Z = outputs["channel"][:, 0]
+        eve_Z = outputs[self.eve.eve_clone.name][:, 0]
 
-        target_long = target.long()
+        sign = 1 - 2 * target.long()
+        bob_f = 0.5 * (1 + sign * bob_Z)
+        eve_f = 0.5 * (1 + sign * eve_Z)
 
-        bob_p_correct = bob_probs.gather(1, target_long.unsqueeze(1)).squeeze(1)
-        eve_p_correct = eve_probs.gather(1, target_long.unsqueeze(1)).squeeze(1)
-
-        bob_f = bob_p_correct[mask].mean()
-        eve_f = eve_p_correct[mask].mean()
+        bob_f = bob_f[mask].mean()
+        eve_f = eve_f[mask].mean()
 
         f_target = self.f_value
 
