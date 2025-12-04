@@ -80,22 +80,24 @@ class BB84TrainableProtocol(BB84Protocol):
     def freeze_elements(self, elements_to_froze:List[TrainableConnectionElement]):
         to_freeze_params_names = [p.name for e in elements_to_froze for p in e.trainable_parameters()]
         params = self.get_all_parameters()
-
         to_freeze_params = {k: v for k, v in params.items() if k in to_freeze_params_names}
+
         qc = self._qc.assign_parameters(to_freeze_params)
         trainable_params = [p for p in self._trainable_params if p.name not in to_freeze_params_names]
-        weights = [v for k, v in params.items() if k not in to_freeze_params_names]
+        weights = torch.tensor([v for k, v in params.items() if k not in to_freeze_params_names])
 
         self._frozen_params = to_freeze_params
-        self.model = MultiOutputQNNWrapper(qc, self._sampler, self._input_params, trainable_params,
-                                           device=self._device, initial_weights=weights)
+        self.model = MultiOutputEstimatorQNNWrapper(qc, self._input_params, trainable_params,
+                                                    device=self._device, estimator=self._estimator, initial_weights=weights)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self._learning_rate)
 
     def defrost_all_elements(self):
         params = self.get_all_parameters()
+        weights = torch.tensor(list(params.values()))
         self._frozen_params = {}
-        self.model = MultiOutputQNNWrapper(self._qc, self._sampler, self._input_params, self._trainable_params,
-                                           device=self._device, initial_weights=list(params.values()))
+        self.model = MultiOutputEstimatorQNNWrapper(self._qc, self._input_params, self._trainable_params,
+                                                    device=self._device, estimator=self._estimator,
+                                                    initial_weights=weights)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self._learning_rate)
 
 
