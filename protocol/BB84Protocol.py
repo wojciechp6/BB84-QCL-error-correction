@@ -14,21 +14,28 @@ from protocol.connection_elements.ConnectionElement import ConnectionElement
 
 
 class BB84Protocol:
-    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None, *, device:str='CPU'):
+    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, channel_size:int=1, seed:int=None, *, device:str='CPU'):
         self.n_bits = n_bits
         self.alice = Alice()
         self.bob = Bob()
         self.elements = elements if elements is not None else []
         self.elements = [self.alice] + self.elements + [self.bob]
-        self.eve = next(e for e in self.elements if isinstance(e, BaseEve))
+        self.eve = self._get_eve(self.elements)
 
         seed = seed if seed is not None else 0
         for i, elem in enumerate(self.elements):
-            elem.init(n_bits, seed+i)
+            elem.init(n_bits, channel_size, seed+i)
+        self._channel_size = channel_size
         self._qc, self._ctx = self.qc_with_ctx()
         self._qc = self._qc.decompose(reps=5)
         self._sampler = self._get_sampler(seed, self._ctx, device)
         self._input_params, self._input_values = self._get_inputs(self.elements)
+
+    def _get_eve(self, elements:List[ConnectionElement]) -> BaseEve | None:
+        for elem in elements:
+            if isinstance(elem, BaseEve):
+                return elem
+        return None
 
     def _get_inputs(self, elements:List[ConnectionElement]) -> Tuple[List, List]:
         input_params = []
@@ -44,11 +51,13 @@ class BB84Protocol:
 
     def qc_with_ctx(self, i: int = None) -> Tuple[QuantumCircuit, dict]:
         ctx = self._get_ctx()
-        channel = QuantumRegister(1, "channel")
+        channel = QuantumRegister(self._channel_size, "channel")
         qc = QuantumCircuit(channel)
         for elem in self.elements:
             qc.add_register(*elem.regs())
-            qc.append(elem.qc(channel, i, ctx), [channel] + elem.qregs(), elem.cregs())
+            qubits = list(channel) + [qbit for qreg in elem.qregs() for qbit in qreg]
+            cbits = [cbit for creg in elem.cregs() for cbit in creg]
+            qc.append(elem.qc(channel, i, ctx), qubits, cbits)
         return qc, ctx
 
     def _get_sampler(self, seed, ctx, device) -> SamplerV2:

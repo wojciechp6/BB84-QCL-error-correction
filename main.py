@@ -7,7 +7,7 @@ from protocol.BB84Protocol import BB84Protocol
 from protocol.connection_elements.IREve import IREve
 from protocol.connection_elements.Noise import Noise
 from protocol.BB84TrainableProtocol import BB84TrainableProtocol
-from protocol.connection_elements.Layer import Layer
+from protocol.connection_elements.Layer import SeparableLayer
 from protocol.connection_elements.PCCMEve import PCCMEve
 from protocol.connection_elements.QCLEve import QCLEve
 

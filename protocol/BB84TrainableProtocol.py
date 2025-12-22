@@ -2,10 +2,7 @@ import itertools
 from typing import List
 
 import torch
-from qiskit import QuantumCircuit
-from qiskit.circuit import Parameter
 from qiskit_aer.primitives import EstimatorV2
-from qiskit_machine_learning.optimizers.optimizer_utils import learning_rate
 from torch import optim
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -13,13 +10,12 @@ from protocol.BB84Protocol import BB84Protocol
 from protocol.connection_elements.ConnectionElement import ConnectionElement
 from protocol.connection_elements.TrainableConnectionElement import TrainableConnectionElement
 from qiskit_extension.MultiOutputEstimatorQNNWraper import MultiOutputEstimatorQNNWrapper
-from qiskit_extension.MultiOutputQNNWraper import MultiOutputQNNWrapper
 
 
 class BB84TrainableProtocol(BB84Protocol):
-    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, seed:int=None,
+    def __init__(self, n_bits=50, elements:List[ConnectionElement]=None, channel_size:int=1, seed:int=None,
                  *, batch_size:int=64, learning_rate:float=0.1, torch_device:str='cpu', backend_device:str='CPU'):
-        super().__init__(n_bits, elements, seed, device=backend_device)
+        super().__init__(n_bits, elements, channel_size, seed, device=backend_device)
 
         self._trainable_params = [e.trainable_parameters() for e in self.elements if isinstance(e, TrainableConnectionElement)]
         self._trainable_params = list(itertools.chain.from_iterable(self._trainable_params))

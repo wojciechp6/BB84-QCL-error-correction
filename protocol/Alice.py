@@ -14,7 +14,7 @@ class Alice(ConnectionElement):
         self.bit_p = Parameter("alice_bit")
         self.base_p = Parameter("alice_base")
 
-    def init(self, n_bits: int, seed=None):
+    def init(self, n_bits: int, channel_size=1, seed=None):
         random = np.random.RandomState(seed)
         self.bits = random.randint(2, size=n_bits)
         self.bases = random.randint(2, size=n_bits)
@@ -29,8 +29,8 @@ class Alice(ConnectionElement):
         ctx['alice_base_p'] = self.base_p
         ctx['alice_bases'] = self.bases
         qc = QuantumCircuit(channel, name="Alice")
-        qc.rx(self.bit_p * math.pi, channel)
-        qc.ry(self.base_p * math.pi/2, channel)
+        qc.rx(self.bit_p * math.pi, channel[0])
+        qc.ry(self.base_p * math.pi/2, channel[0])
         if i is not None:
             qc.assign_parameters({"alice_base": self.bases[i], "alice_bit": self.bits[i]}, inplace=True)
         return qc

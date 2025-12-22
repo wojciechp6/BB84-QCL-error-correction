@@ -8,7 +8,7 @@ from experiments.plt_pab_fae import plt_fab_fae
 from protocol.BB84EveTrainableProtocol import BB84EveTrainableProtocol
 from protocol.BB84Protocol import BB84Protocol
 from protocol.BB84TrainableProtocol import BB84TrainableProtocol
-from protocol.connection_elements.Layer import Layer
+from protocol.connection_elements.Layer import SeparableLayer
 from protocol.connection_elements.Noise import Noise
 from protocol.connection_elements.QCLEve import QCLEve
 

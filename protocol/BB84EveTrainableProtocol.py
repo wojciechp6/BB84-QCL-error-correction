@@ -1,21 +1,12 @@
-from typing import List
-
 import torch
-from qiskit_machine_learning.neural_networks import SamplerQNN
-from sympy.physics.vector.printing import params
 
 from protocol.BB84TrainableProtocol import BB84TrainableProtocol
-from protocol.connection_elements.Layer import Layer
-from protocol.connection_elements.QCLEve import QCLEve
-from protocol.connection_elements.SimpleEve import SimpleEve
-from protocol.connection_elements.TrainableConnectionElement import TrainableConnectionElement
-from qiskit_extension.MultiOutputQNNWraper import MultiOutputQNNWrapper
 
 
 class BB84EveTrainableProtocol(BB84TrainableProtocol):
-    def __init__(self, n_bits, elements, seed=None, f_value:float=0.892, alpha=10,
+    def __init__(self, n_bits, elements, channel_size=1, seed=None, f_value:float=0.853, alpha=10,
                  *, batch_size=64, learning_rate:float=0.1, torch_device:str='cpu', backend_device:str='CPU'):
-        super().__init__(n_bits, elements, seed, batch_size=batch_size, learning_rate=learning_rate,
+        super().__init__(n_bits, elements, channel_size, seed, batch_size=batch_size, learning_rate=learning_rate,
                          torch_device=torch_device, backend_device=backend_device)
         self.f_value = f_value
         self.alpha = alpha

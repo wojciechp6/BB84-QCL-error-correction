@@ -11,14 +11,14 @@ class Bob(ConnectionElement):
         self.bases = None
         self.measure = ClassicalRegister(1, "bob_measure")
 
-    def init(self, n_bits: int, seed=None):
+    def init(self, n_bits: int, channel_size=1, seed=None):
         random = np.random.RandomState(seed)
         self.bases = random.randint(2, size=n_bits)
 
     def qc(self, channel: QuantumRegister, i, ctx: dict) -> QuantumCircuit:
         qc = QuantumCircuit(channel, self.measure, name="Bob")
-        qc.ry(self.base_p * -np.pi/2, 0)
-        qc.measure(channel, self.measure)
+        qc.ry(self.base_p * -np.pi/2, channel[0])
+        qc.measure(channel[0], self.measure)
         if i is not None:
             qc.assign_parameters({"bob_base": self.bases[i]}, inplace=True)
         return qc

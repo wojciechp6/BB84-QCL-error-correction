@@ -17,6 +17,9 @@ class QCLEve(BaseEve, TrainableConnectionElement):
         self.v_params_z = [Parameter(f"ΛZ_{k}") for k in range(3)]
         self.v_params_x = [Parameter(f"ΛX_{k}") for k in range(3)]
 
+    def init(self, n_bits: int, channel_size:int=1, seed=None):
+        assert channel_size==1, "This Eve supports only one channel"
+
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
         alice_base_p = ctx["alice_base_p"]
         alice_bases = ctx["alice_bases"]

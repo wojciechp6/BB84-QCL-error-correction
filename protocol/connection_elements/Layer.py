@@ -1,28 +1,46 @@
 from typing import List
 
-import torch
-import torch.nn as nn
 from qiskit import QuantumCircuit, QuantumRegister
-from qiskit.circuit import Parameter
+from qiskit.circuit import Parameter, ParameterVector
 
-from protocol.connection_elements.ConnectionElement import ConnectionElement
 from protocol.connection_elements.TrainableConnectionElement import TrainableConnectionElement
+from protocol.connection_elements.U import NQubitU, U
 
 
-class Layer(TrainableConnectionElement):
-    _index = 0
-    def __init__(self):
+class SeparableLayer(TrainableConnectionElement):
+    def __init__(self, name="SeparableLayer"):
         super().__init__()
-        index = Layer._index
-        Layer._index += 1
-        self.params = [Parameter(f"x_{index}"), Parameter(f"y_{index}"), Parameter(f"z_{index}")]
+        self.name = name
+        self.u_gates = None
+
+    def init(self, n_bits: int, channel_size: int = 1, seed=None):
+        self.u_gates = [U(f"{self.name}_U{i}") for i in range(channel_size)]
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
-        qc = QuantumCircuit(channel, name="TrainableLayer")
-        qc.rx(self.params[0], qubit=0)
-        qc.ry(self.params[1], qubit=0)
-        qc.rz(self.params[2], qubit=0)
+        assert len(channel) == len(self.u_gates)
+        qc = QuantumCircuit(channel, name=self.name)
+        for qi in range(channel.size):
+            qc.append(self.u_gates[qi].qc(channel[qi]), [channel[qi]])
         return qc
 
     def trainable_parameters(self) -> List[Parameter]:
-        return self.params
+        return [p for u1 in self.u_gates for p in u1.params()]
+
+
+class EntangledLayer(TrainableConnectionElement):
+    def __init__(self, name="EntangledLayer"):
+        super().__init__()
+        self.name = name
+        self.nu = None
+
+    def init(self, n_bits: int, channel_size: int = 1, seed=None):
+        self.nu = NQubitU(channel_size)
+
+    def qc(self, channel: QuantumRegister, i: int, ctx: dict):
+        qc = QuantumCircuit(channel, name=self.name)
+        qc.append(self.nu.qc(channel), channel)
+        return qc
+
+    def trainable_parameters(self) -> List[Parameter]:
+        return self.nu.params()
+

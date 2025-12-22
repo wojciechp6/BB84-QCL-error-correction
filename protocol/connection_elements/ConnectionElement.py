@@ -4,7 +4,7 @@ from qiskit import QuantumCircuit, QuantumRegister
 
 
 class ConnectionElement(ABC):
-    def init(self, n_bits: int, seed=None):
+    def init(self, n_bits: int, channel_size:int=1, seed=None):
         pass
 
     @abstractmethod
