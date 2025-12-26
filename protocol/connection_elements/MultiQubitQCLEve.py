@@ -19,7 +19,6 @@ class MultiQubitQCLEve(BaseEve, TrainableConnectionElement):
     def init(self, n_bits: int, channel_size:int=1, seed=None):
         super().init(n_bits, channel_size, seed)
         self.nu = NQubitU(channel_size*2)
-        print("init", self.regs())
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
         alice_base_p = ctx["alice_base_p"]
