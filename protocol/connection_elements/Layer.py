@@ -34,7 +34,7 @@ class EntangledLayer(TrainableConnectionElement):
         self.nu = None
 
     def init(self, n_bits: int, channel_size: int = 1, seed=None):
-        self.nu = NQubitU(channel_size)
+        self.nu = NQubitU(channel_size, name=f"{self.name}_NU")
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
         qc = QuantumCircuit(channel, name=self.name)

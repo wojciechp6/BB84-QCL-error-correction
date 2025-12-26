@@ -2,7 +2,7 @@ from collections.abc import Iterable
 from typing import List, Tuple
 
 import numpy as np
-from qiskit import QuantumRegister, QuantumCircuit
+from qiskit import QuantumRegister, QuantumCircuit, transpile
 from qiskit.primitives import PrimitiveResult
 from qiskit_aer.noise import NoiseModel
 from qiskit_aer.primitives import SamplerV2
@@ -27,7 +27,7 @@ class BB84Protocol:
             elem.init(n_bits, channel_size, seed+i)
         self._channel_size = channel_size
         self._qc, self._ctx = self.qc_with_ctx()
-        self._qc = self._qc.decompose(reps=5)
+        self._qc = transpile(self._qc.decompose(reps=5), optimization_level=3)
         self._sampler = self._get_sampler(seed, self._ctx, device)
         self._input_params, self._input_values = self._get_inputs(self.elements)
 

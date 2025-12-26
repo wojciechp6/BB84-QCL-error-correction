@@ -3,15 +3,16 @@ from qiskit.circuit import ParameterVector, Qubit
 
 
 class NQubitU:
-    def __init__(self, channel_size: int):
+    def __init__(self, channel_size: int, name: str = "NU"):
         super().__init__()
         assert channel_size >= 2, "NQubitU requires at least 2 qubits to entangle."
         self.channel_size = channel_size
+        self.name = name
         self.uu_layers = self.create_uu_layers(channel_size)
 
     def qc(self, channel: QuantumRegister):
         assert self.channel_size == channel.size
-        qc = QuantumCircuit(channel, name="NQ")
+        qc = QuantumCircuit(channel, name=self.name)
 
         for layer_i, uu_layer in enumerate(self.uu_layers):
             for uu_index, uu in enumerate(uu_layer):
@@ -26,16 +27,16 @@ class NQubitU:
     def create_uu_layers(self, channel_size: int):
         layers = []
         if channel_size == 2:
-            layers.append([SimplifiedUU("W")])
+            layers.append([SimplifiedUU(f"{self.name}_W")])
         elif channel_size > 2:
             same = channel_size % 2 == 1
             l = channel_size // 2
             k = l if same else l - 1
             for i in range(channel_size):
                 if i % 2 == 0:
-                    layers.append([SimplifiedUU(f"W_{i}_{j}") for j in range(l)])
+                    layers.append([SimplifiedUU(f"{self.name}_W_{i}_{j}") for j in range(l)])
                 else:
-                    layers.append([SimplifiedUU(f"W_{i}_{j}") for j in range(k)])
+                    layers.append([SimplifiedUU(f"{self.name}_W_{i}_{j}") for j in range(k)])
         return layers
 
 class SimplifiedUU:
