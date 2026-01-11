@@ -18,11 +18,11 @@ class QCLEve(BaseEve, TrainableConnectionElement):
         self.v_params_x = [Parameter(f"ΛX_{k}") for k in range(3)]
 
     def init(self, n_bits: int, channel_size:int=1, seed=None):
+        super().init(n_bits, channel_size, seed)
         assert channel_size==1, "This Eve supports only one channel"
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
         alice_base_p = ctx["alice_base_p"]
-        alice_bases = ctx["alice_bases"]
 
         qc = QuantumCircuit(channel, self.eve_clone, self.eve_measure, name="QCLEve")
         for layer in self.u_layers:
@@ -41,7 +41,7 @@ class QCLEve(BaseEve, TrainableConnectionElement):
         qc.measure(self.eve_clone, self.eve_measure)
 
         if i is not None:
-            qc.assign_parameters({"alice_base": alice_bases[i]}, inplace=True)
+            qc.assign_parameters({"alice_base": alice_base_p.values[i]}, inplace=True)
         return qc
 
     def trainable_parameters(self) -> List[Parameter]:

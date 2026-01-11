@@ -41,8 +41,9 @@ class BB84Protocol:
         input_params = []
         input_values = []
         for elem in elements:
-            input_params.extend(elem.input_params())
-            input_values.extend(elem.input_values())
+            params = elem.input_params()
+            input_params.extend(params)
+            input_values.extend([p.values for p in params])
 
         assert len(input_params) == len(input_values)
         for vals in input_values:
@@ -62,7 +63,8 @@ class BB84Protocol:
 
     def _get_sampler(self, seed, ctx, device) -> SamplerV2:
         return SamplerV2(default_shots=1, seed=seed,
-                  options={"backend_options": {'noise_model': ctx['noise_model'], "device": device}})
+                  options={"backend_options": {'noise_model': ctx['noise_model'], "device": device,
+                                               "max_parallel_experiments": 0}})
 
     def run(self):
         return self._run_and_calculate_qber(self._qc)
@@ -93,8 +95,8 @@ class BB84Protocol:
         return ctx
 
     def _sift(self, bob_results:Iterable[int]):
-        mask = self.alice.bases == self.bob.bases
-        sifted_alice = self.alice.bits[mask]
+        mask = self.alice.base_p.values == self.bob.base_p.values
+        sifted_alice = self.alice.bit_p.values[mask]
         sifted_bob = np.array(bob_results)[mask]
         return sifted_alice, sifted_bob
 

@@ -9,6 +9,8 @@ class NQubitU:
         self.channel_size = channel_size
         self.name = name
         self.uu_layers = self.create_uu_layers(channel_size)
+        self.u_gates = [U(f"{name}_U{i}") for i in range(2)]
+
 
     def qc(self, channel: QuantumRegister):
         assert self.channel_size == channel.size
@@ -19,6 +21,9 @@ class NQubitU:
                 q1_index = uu_index * 2 + (layer_i % 2)
                 q2_index = q1_index + 1
                 qc.append(uu.qc(channel[q1_index], channel[q2_index]), [channel[q1_index], channel[q2_index]])
+
+        # TODO czy tu nie trzeba dodać jeszcze U na każdym qubicie?
+
         return qc
 
     def params(self):
@@ -41,23 +46,38 @@ class NQubitU:
 
 class SimplifiedUU:
     def __init__(self, name: str):
-        self._u_gates = [U(f"{name}_U{i}") for i in range(2)]
-        self._weyl = Weyl(f"{name}_weyl")
+        self.u_gates = [U(f"{name}_U{i}") for i in range(2)]
+        self.weyl = Weyl(f"{name}_weyl")
         self._name = name
 
     def qc(self, q1, q2):
         qreg = QuantumRegister(bits=[q1, q2], name="q",)
         qc = QuantumCircuit(qreg, name="UU")
-        qc.append(self._u_gates[0].qc(q1), [q1])
-        qc.append(self._u_gates[1].qc(q2), [q2])
-        qc.append(self._weyl.qc(q1, q2), [q1, q2])
+        qc.append(self.u_gates[0].qc(q1), [q1])
+        qc.append(self.u_gates[1].qc(q2), [q2])
+        qc.append(self.weyl.qc(q1, q2), [q1, q2])
         return qc
 
     def params(self):
-        return self._u_gates[0].params() + self._u_gates[1].params() + self._weyl.params()
+        return self.u_gates[0].params() + self.u_gates[1].params() + self.weyl.params()
 
 
 class Weyl:
+    def __init__(self, name: str):
+        self._params = ParameterVector(f"{name}", length=3)
+
+    def qc(self, q1, q2):
+        qreg = QuantumRegister(bits=[q1, q2], name="q",)
+        qc = QuantumCircuit(qreg, name="Weyl")
+        qc.rxx(self._params[0], q1, q2)
+        qc.ryy(self._params[1], q1, q2)
+        qc.rzz(self._params[2], q1, q2)
+        return qc
+
+    def params(self):
+        return self._params.params
+
+class SimplifiedWeyl:
     def __init__(self, name: str):
         self._params = ParameterVector(f"{name}", length=3)
 

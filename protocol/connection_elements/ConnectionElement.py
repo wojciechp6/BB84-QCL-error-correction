@@ -1,6 +1,9 @@
 from abc import abstractmethod, ABC
+from typing import List
 
-from qiskit import QuantumCircuit, QuantumRegister
+from qiskit.circuit import QuantumCircuit, QuantumRegister
+
+from protocol.input_parameter import InputParameter
 
 
 class ConnectionElement(ABC):
@@ -20,8 +23,5 @@ class ConnectionElement(ABC):
     def qregs(self) -> list:
         return []
 
-    def input_params(self) -> list:
-        return []
-
-    def input_values(self) -> list:
+    def input_params(self) -> List[InputParameter]:
         return []

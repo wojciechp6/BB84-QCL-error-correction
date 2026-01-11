@@ -22,7 +22,6 @@ class MultiQubitQCLEve(BaseEve, TrainableConnectionElement):
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
         alice_base_p = ctx["alice_base_p"]
-        alice_bases = ctx["alice_bases"]
 
         qc = QuantumCircuit(channel, self.eve_clone, self.eve_measure, name="MultiQubitQCLEve")
         concatenated = QuantumRegister(name="concatenated", bits=list(channel) + list(self.eve_clone))
@@ -42,7 +41,7 @@ class MultiQubitQCLEve(BaseEve, TrainableConnectionElement):
         qc.measure(self.eve_clone[0], self.eve_measure)
 
         if i is not None:
-            qc.assign_parameters({"alice_base": alice_bases[i]}, inplace=True)
+            qc.assign_parameters({"alice_base": alice_base_p.values[i]}, inplace=True)
         return qc
 
     def trainable_parameters(self) -> List[Parameter]:
