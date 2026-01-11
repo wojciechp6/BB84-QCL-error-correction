@@ -32,20 +32,44 @@ def plt_fab_fae(
 
     # Krzywa teoretyczna
     plt.plot(
-        fab_pccm,
         fae_pccm,
+        fab_pccm,
         label="PCCM (analityczne)",
         linewidth=2,
     )
 
+    plt.scatter(
+        [max(fae[0], 0.5)],
+        [max(fab[0], 0.5)],
+        s=80,
+        color="green",
+        zorder=4,
+        label="start",
+        marker="d",
+        clip_on=False,
+    )
+
     plt.scatter(fae, fab, s=40, zorder=3, alpha=0.3, label="symulacje")
+
+    plt.scatter(
+        [max(fae[-1], 0.5)],
+        [max(fab[-1], 0.5)],
+        s=80,
+        color="orange",
+        zorder=4,
+        label="end",
+        marker="*",
+        clip_on=False,
+    )
+
     plt.scatter(
         *target,
         s=100,
-        zorder=4,
+        zorder=5,
         label="docelowy punkt",
         color="red",
         marker="x",
+        clip_on=False,
     )
 
     plt.xlabel(r"$F_{AE}$")

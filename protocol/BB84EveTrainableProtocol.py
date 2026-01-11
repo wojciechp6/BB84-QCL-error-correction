@@ -11,17 +11,6 @@ class BB84EveTrainableProtocol(BB84TrainableProtocol):
         self.f_value = f_value
         self.alpha = alpha
 
-    def train(self):
-        losses = []
-        for inputs, target, mask in self.dataloader:
-            self.optimizer.zero_grad()
-            outputs = self.model.forward_as_dict(inputs)
-            loss = self.loss(target, mask, outputs)
-            loss.backward()
-            self.optimizer.step()
-            losses.append(loss)
-        return torch.stack(losses).mean()
-
     def loss(self, target, mask, outputs):
         bob_Z = outputs["channel"][:, 0]
         eve_Z = outputs[self.eve.eve_clone.name][:, 0]
