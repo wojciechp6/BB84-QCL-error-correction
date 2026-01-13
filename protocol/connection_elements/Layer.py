@@ -17,7 +17,7 @@ class SeparableLayer(TrainableConnectionElement):
         self.u_gates = [U(f"{self.name}_U{i}") for i in range(channel_size)]
 
     def qc(self, channel: QuantumRegister, i: int, ctx: dict):
-        assert len(channel) == len(self.u_gates)
+        assert len(channel) == len(self.u_gates), f"Channel size and number of U gates must match. {len(channel)} != {len(self.u_gates)}"
         qc = QuantumCircuit(channel, name=self.name)
         for qi in range(channel.size):
             qc.append(self.u_gates[qi].qc(channel[qi]), [channel[qi]])
