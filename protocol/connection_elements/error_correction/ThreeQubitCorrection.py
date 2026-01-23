@@ -42,8 +42,10 @@ class ThreeQubitBitFlipDecoder(ConnectionElement):
         qc.x(self.anscilla[1])
         qc.ccx(self.anscilla[0], self.anscilla[1], channel[2])
         qc.x(self.anscilla[0])
-        qc.measure(self.anscilla, self.test)
-        # qc.measure(self.anscilla[1], self.test[1])
+        # qc.measure(self.anscilla, self.test)
+
+        qc.cx(channel[0], channel[2])
+        qc.cx(channel[0], channel[1])
         return qc
 
     def qregs(self) -> list:
