@@ -31,34 +31,39 @@ class BB84TrainableProtocol(BB84Protocol):
 
     def _get_estimator(self, ctx, device) -> EstimatorV2:
         return EstimatorV2(options={"backend_options": {'noise_model': ctx['noise_model'], "device": device,
-                                                        "max_parallel_experiments": 0, "max_job_size": 16}})
+                                                        "max_parallel_experiments": 0, "max_job_size": 0,
+                                                        "precision": "single", "cuStateVec_enable": True }})
 
     def _get_dataloader(self, batch_size) -> DataLoader:
         inputs_space_product = np.array(list(itertools.product(*[p.cover_space() for p in self._input_params])))
+        alice_bases = inputs_space_product[:, self._input_params.index(self.alice.base_p)]
+        bob_bases = inputs_space_product[:, self._input_params.index(self.bob.base_p)]
+        mask = alice_bases == bob_bases
+        inputs_space_product = inputs_space_product[mask]
         target = inputs_space_product[:, self._input_params.index(self.alice.bit_p)]
-        alice_base = inputs_space_product[:, self._input_params.index(self.alice.base_p)]
-        bob_base = inputs_space_product[:, self._input_params.index(self.bob.base_p)]
         inputs = torch.tensor(inputs_space_product, dtype=torch.int, device=self._device)
         target = torch.tensor(target, dtype=torch.int, device=self._device)
-        mask = (torch.tensor(alice_base) == torch.tensor(bob_base)).to(self._device)
-        return DataLoader(TensorDataset(inputs, target, mask), batch_size, shuffle=True)
+        return DataLoader(TensorDataset(inputs, target), batch_size, shuffle=True)
 
     def train(self):
         losses = []
-        for inputs, target, mask in self.dataloader:
+        for inputs, target in self.dataloader:
             self.optimizer.zero_grad()
             outputs = self.model.forward_as_dict(inputs)
-            loss = self.loss(target, mask, outputs)
+            loss = self.loss(target, outputs)
             loss.backward()
             self.optimizer.step()
-            losses.append(loss)
+            losses.append(loss.detach())
         return torch.stack(losses).mean()
 
-    def loss(self, target, mask, outputs):
+    def loss(self, target, outputs):
         bob_Z = outputs["channel"][:, 0]
         sign = 1.0 - 2.0 * target.float()
         bob_f_sample = 0.5 * (1.0 + sign * bob_Z)
-        loss = -bob_f_sample[mask].mean()
+        # mask_f = mask.float()
+        # loss = -(bob_f_sample * mask_f).sum() / mask_f.sum().clamp_min(1)
+
+        loss = -bob_f_sample.mean()
         return loss
 
     def run(self):

@@ -11,7 +11,7 @@ class BB84EveTrainableProtocol(BB84TrainableProtocol):
         self.f_value = f_value
         self.alpha = alpha
 
-    def loss(self, target, mask, outputs):
+    def loss(self, target, outputs):
         bob_Z = outputs["channel"][:, 0]
         eve_Z = outputs[self.eve.eve_clone.name][:, 0]
 
@@ -19,8 +19,8 @@ class BB84EveTrainableProtocol(BB84TrainableProtocol):
         bob_f = 0.5 * (1 + sign * bob_Z)
         eve_f = 0.5 * (1 + sign * eve_Z)
 
-        bob_f = bob_f[mask].mean()
-        eve_f = eve_f[mask].mean()
+        bob_f = bob_f.mean()
+        eve_f = eve_f.mean()
 
         f_target = self.f_value
 
